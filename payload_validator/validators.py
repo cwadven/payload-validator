@@ -8,7 +8,7 @@ from typing import (
 )
 from types import FunctionType
 
-from validator_excpetions import (
+from exceptions import (
     InvalidValueError,
     ValidationException,
     ValidationNotRunException,
