@@ -15,7 +15,7 @@ from payload_validator.exceptions import (
 )
 
 
-T = TypeVar('T')  # Use TypeVar for arbitrary object types
+T = TypeVar("T")  # Use TypeVar for arbitrary object types
 
 
 class ValidatorErrorContext(ABC, dict):
@@ -31,7 +31,7 @@ class NormalValidatorErrorContext(ValidatorErrorContext):
 
 
 class PayloadValidator(object):
-    DEFAULT_MANDATORY_ERROR_MESSAGE = 'mandatory data missing'
+    DEFAULT_MANDATORY_ERROR_MESSAGE = "mandatory data missing"
 
     def __init__(self, payload: dict, error_context: ValidatorErrorContext = None) -> None:
         self.payload = payload
@@ -45,8 +45,8 @@ class PayloadValidator(object):
 
         self.meta = self._get_meta_attribute()
         if self.meta:
-            self.mandatory_keys = getattr(self.meta, 'mandatory_keys', {})
-            self.type_of_keys = getattr(self.meta, 'type_of_keys', {})
+            self.mandatory_keys = getattr(self.meta, "mandatory_keys", {})
+            self.type_of_keys = getattr(self.meta, "type_of_keys", {})
 
     def add_error_context(self, key: str, description: str) -> None:
         if key not in self._skip_validate_keys:
@@ -60,13 +60,13 @@ class PayloadValidator(object):
         self._skip_validate_keys.add(key)
 
     def _get_meta_attribute(self) -> Optional[T]:
-        return getattr(self, 'Meta', None)
+        return getattr(self, "Meta", None)
 
     def _validate_mandatory_payloads(self) -> None:
         """
         mandatory_keys example:
         {
-            'displayable': 'displayable is required',  # if error message is not provided, default message will be used
+            "displayable": "displayable is required",  # if error message is not provided, default message will be used
         }
         """
         for key, error_message in self.mandatory_keys.items():
@@ -112,7 +112,7 @@ class PayloadValidator(object):
 
     def _validate_methods(self) -> None:
         for x, y in self.__class__.__dict__.items():
-            if type(y) == FunctionType and x.startswith('validate'):
+            if type(y) == FunctionType and x.startswith("validate"):
                 try:
                     y(self)
                 except InvalidValueError as e:
@@ -135,7 +135,7 @@ class PayloadValidator(object):
     @property
     def error_context(self) -> ValidatorErrorContext:
         if not self._validate_called:
-            raise ValidationNotRunException('validate method should run before accessing error_context')
+            raise ValidationNotRunException("validate method should run before accessing error_context")
         return self._error_context
 
     def is_valid(self) -> bool:
