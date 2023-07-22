@@ -20,6 +20,8 @@ class InvalidValueError(Exception):
             skip_existing_errors = []
         result = [key for key in skip_existing_errors if key not in error_value_by_key.keys()]
         if result:
-            raise MismatchedErrorKeysException(f"In error_exists_skip_keys {', '.join(result)} not in error_value_by_key")
+            raise MismatchedErrorKeysException(
+                "In error_exists_skip_keys {} not in error_value_by_key".format(', '.join(result))
+            )
         self.error_value_by_key = error_value_by_key
         self.skip_existing_errors = skip_existing_errors
