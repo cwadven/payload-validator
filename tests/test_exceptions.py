@@ -76,7 +76,7 @@ class TestInvalidValueError(unittest.TestCase):
         # Then: invalid_key and invalid_key2 should be in error message
         self.assertEqual(
             str(context.exception),
-            "In error_exists_skip_keys {} not in error_value_by_key".format(
+            "In add_skip_validation_keys {} not in error_value_by_key".format(
                 "invalid_key, invalid_key2"
             )
         )

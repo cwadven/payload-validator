@@ -25,7 +25,7 @@ class InvalidValueError(Exception):
         result = [key for key in add_skip_validation_keys if key not in error_value_by_key.keys()]
         if result:
             raise MismatchedErrorKeysException(
-                "In error_exists_skip_keys {} not in error_value_by_key".format(', '.join(result))
+                "In add_skip_validation_keys {} not in error_value_by_key".format(', '.join(result))
             )
         self.error_value_by_key = error_value_by_key
         self.add_skip_validation_keys = add_skip_validation_keys
