@@ -8,7 +8,7 @@ from typing import (
 )
 from types import FunctionType
 
-from exceptions import (
+from payload_validator.exceptions import (
     InvalidValueError,
     ValidationException,
     ValidationNotRunException,
