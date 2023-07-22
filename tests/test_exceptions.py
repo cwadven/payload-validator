@@ -41,7 +41,7 @@ class TestMismatchedErrorKeysException(unittest.TestCase):
 
 
 class TestInvalidValueError(unittest.TestCase):
-    def test_invalid_value_error_exception_should_success_when_without_skip_existing_errors(self):
+    def test_invalid_value_error_exception_should_success_when_without_add_skip_validation_keys(self):
         # Given:
         error_value_by_key = {"key1": "error1", "key2": "error2"}
 
@@ -50,22 +50,22 @@ class TestInvalidValueError(unittest.TestCase):
 
         # Then:
         self.assertEqual(error.error_value_by_key, error_value_by_key)
-        self.assertEqual(error.skip_existing_errors, [])
+        self.assertEqual(error.add_skip_validation_keys, [])
 
-    def test_invalid_value_error_exception_should_success_when_skip_existing_errors(self):
+    def test_invalid_value_error_exception_should_success_when_add_skip_validation_keys(self):
         # Given:
         error_value_by_key = {"key1": "error1", "key2": "error2"}
-        skip_existing_errors = ["key2"]
+        add_skip_validation_keys = ["key2"]
 
         # When:
-        error = InvalidValueError(error_value_by_key, skip_existing_errors)
+        error = InvalidValueError(error_value_by_key, add_skip_validation_keys)
 
         # Then:
         self.assertEqual(error.error_value_by_key, error_value_by_key)
-        self.assertEqual(error.skip_existing_errors, skip_existing_errors)
+        self.assertEqual(error.add_skip_validation_keys, add_skip_validation_keys)
 
-    def test_invalid_value_error_exception_should_raise_when_skip_existing_errors_not_exists_in_error_value_by_key(self):
-        # Given: not exists skip_existing_errors in error_value_by_key
+    def test_invalid_value_error_exception_should_raise_when_add_skip_validation_keys_not_exists_in_error_value_by_key(self):
+        # Given: not exists add_skip_validation_keys in error_value_by_key
         error_value_by_key = {"key1": "error1", "key2": "error2"}
         invalid_keys = ["invalid_key", "invalid_key2"]
 

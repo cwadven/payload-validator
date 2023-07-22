@@ -43,20 +43,22 @@ class PayloadValidator(object):
             else NormalValidatorErrorContext()
         )
 
-        self.meta = self._get_meta_attribute()
-        if self.meta:
-            self.mandatory_keys = getattr(self.meta, "mandatory_keys", {})
-            self.type_of_keys = getattr(self.meta, "type_of_keys", {})
+        self.mandatory_keys = getattr(self._get_meta_attribute(), "mandatory_keys", {})
+        self.type_of_keys = getattr(self._get_meta_attribute(), "type_of_keys", {})
 
-    def add_error_context(self, key: str, description: str) -> None:
+    def add_error_context(self, key: str, errors: Union[str, Iterable]) -> None:
         if key not in self._skip_validate_keys:
-            self._error_context.add_error(key, description)
+            if isinstance(errors, str):
+                self._error_context.add_error(key, errors)
+            else:
+                for error in errors:
+                    self._error_context.add_error(key, error)
 
-    def add_error_and_skip_validation_key(self, key: str, description: str) -> None:
+    def add_error_and_skip_validation_key(self, key: str, errors: Union[str, Iterable]) -> None:
         """
         add only main error so other errors cannot add
         """
-        self.add_error_context(key, description)
+        self.add_error_context(key, errors)
         self._skip_validate_keys.add(key)
 
     def _get_meta_attribute(self) -> Optional[T]:
@@ -80,10 +82,10 @@ class PayloadValidator(object):
             if not isinstance(type_or_funcs, Iterable):
                 type_or_funcs = [type_or_funcs]
 
-            if not self._is_payload_valid(key, type_or_funcs):
+            if not self._is_payload_type_valid(key, type_or_funcs):
                 self.add_error_and_skip_validation_key(key, error_msg)
 
-    def _is_payload_valid(self, key: str, type_or_funcs: Union[Iterable, Callable]) -> bool:
+    def _is_payload_type_valid(self, key: str, type_or_funcs: Union[Iterable, Callable]) -> bool:
         payload_value = self.payload.get(key)
 
         for type_or_func in type_or_funcs:
@@ -99,7 +101,7 @@ class PayloadValidator(object):
             self.common_validate()
         except InvalidValueError as e:
             for key, value in e.error_value_by_key.items():
-                if key in e.skip_existing_errors:
+                if key in e.add_skip_validation_keys:
                     self.add_error_and_skip_validation_key(key, value)
                 else:
                     self.add_error_context(key, value)
@@ -117,7 +119,7 @@ class PayloadValidator(object):
                     y(self)
                 except InvalidValueError as e:
                     for key, value in e.error_value_by_key.items():
-                        if key in e.skip_existing_errors:
+                        if key in e.add_skip_validation_keys:
                             self.add_error_and_skip_validation_key(key, value)
                         else:
                             self.add_error_context(key, value)

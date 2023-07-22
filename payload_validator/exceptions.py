@@ -1,4 +1,8 @@
-from typing import Dict
+from typing import (
+    Dict,
+    Iterable,
+    Union,
+)
 
 
 class ValidationException(Exception):
@@ -15,13 +19,13 @@ class MismatchedErrorKeysException(Exception):
 
 
 class InvalidValueError(Exception):
-    def __init__(self, error_value_by_key: Dict[str, str], skip_existing_errors: list = None):
-        if skip_existing_errors is None:
-            skip_existing_errors = []
-        result = [key for key in skip_existing_errors if key not in error_value_by_key.keys()]
+    def __init__(self, error_value_by_key: Dict[str, Union[str, Iterable]], add_skip_validation_keys: list = None):
+        if add_skip_validation_keys is None:
+            add_skip_validation_keys = []
+        result = [key for key in add_skip_validation_keys if key not in error_value_by_key.keys()]
         if result:
             raise MismatchedErrorKeysException(
                 "In error_exists_skip_keys {} not in error_value_by_key".format(', '.join(result))
             )
         self.error_value_by_key = error_value_by_key
-        self.skip_existing_errors = skip_existing_errors
+        self.add_skip_validation_keys = add_skip_validation_keys

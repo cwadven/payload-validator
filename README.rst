@@ -51,6 +51,10 @@ using_this_payload.py::
     # 7. Use 'validate()' method to validate payload or execute 'is_valid()' method to check validation even once
     # 8. 'ValidationException' will raise when error exists
 
+    # [ Extra Information ]
+    # you can use 'add_error_context' or 'add_error_and_skip_validation_key'
+    # instead of 'InvalidValueError' to define errors
+
     # 1
     class NewPayloadValidator(PayloadValidator):
         # 2
@@ -91,7 +95,7 @@ using_this_payload.py::
                     {
                         'max_length': 'min_length should be greater than 0'
                     },
-                    skip_existing_errors=['max_length']
+                    add_skip_validation_keys=['max_length']
                 )
 
         # 5
@@ -103,6 +107,7 @@ using_this_payload.py::
                         'min_length': 'min_length should be lesser than max_length'
                     },
                 )
+
 
 
     validator = NewPayloadValidator({'displayable': True, 'start_date': 1, 'min_length': 10, 'max_length': 0})
@@ -166,6 +171,10 @@ custom_using_this_payload.py::
     # 7. Use 'validate()' method to validate payload or execute 'is_valid()' method to check validation even once
     # 8. 'ValidationException' will raise when error exists
 
+    # [ Extra Information ]
+    # you can use 'add_error_context' or 'add_error_and_skip_validation_key'
+    # instead of 'InvalidValueError' to define errors
+
     # Extra: Customize Error Context
     # 'ColorValidatorErrorContext' is a 'PayloadValidator' can return error message with color
     class ColorValidatorErrorContext(ValidatorErrorContext):
@@ -220,7 +229,7 @@ custom_using_this_payload.py::
                     {
                         'max_length': 'min_length should be greater than 0,#000000'
                     },
-                    skip_existing_errors=['max_length']
+                    add_skip_validation_keys=['max_length']
                 )
 
         # 5
