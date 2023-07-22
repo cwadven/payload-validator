@@ -1,0 +1,8 @@
+build
+dist
+*.egg-info
+venv
+.idea
+deploy.sh
+deploy_ended.py
+deploy.log
