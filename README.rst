@@ -17,11 +17,11 @@ Normal ValidatorErrorContext Usage
 
 using_this_payload.py::
 
-    from utils import validate_date_parsing
-    from validator_excpetions import (
+    from exceptions import (
         InvalidValueError,
         ValidationException,
     )
+    from utils import validate_date_parsing
     from validators import PayloadValidator
 
 
@@ -125,11 +125,11 @@ Custom ValidatorErrorContext Usage
 
 custom_using_this_payload.py::
 
-    from utils import validate_date_parsing
-    from validator_excpetions import (
+    from exceptions import (
         InvalidValueError,
         ValidationException,
     )
+    from utils import validate_date_parsing
     from validators import PayloadValidator, ValidatorErrorContext
 
 
