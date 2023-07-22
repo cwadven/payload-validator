@@ -17,12 +17,21 @@ Normal ValidatorErrorContext Usage
 
 using_this_payload.py::
 
+    from datetime import datetime
     from payload_validator.exceptions import (
         InvalidValueError,
         ValidationException,
     )
     from utils import validate_date_parsing
     from payload_validator.validators import PayloadValidator
+
+
+    def validate_date_parsing(date_str):
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+            return True
+        except (TypeError, ValueError):
+            return False
 
 
     # [ Examples of using validators ]
@@ -125,6 +134,7 @@ Custom ValidatorErrorContext Usage
 
 custom_using_this_payload.py::
 
+    from datetime import datetime
     from payload_validator.exceptions import (
         InvalidValueError,
         ValidationException,
@@ -132,6 +142,12 @@ custom_using_this_payload.py::
     from utils import validate_date_parsing
     from payload_validator.validators import PayloadValidator, ValidatorErrorContext
 
+    def validate_date_parsing(date_str):
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+            return True
+        except (TypeError, ValueError):
+            return False
 
     # [ Examples of using validators ]
     # 1. Inherit 'PayloadValidator' and define 'Meta class'
