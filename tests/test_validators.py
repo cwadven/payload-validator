@@ -606,7 +606,6 @@ class TestPayloadValidator(unittest.TestCase):
         self.assertEqual(validator._validate_called, True)
         self.assertIn("start_date", validator._skip_validate_keys)
         self.assertEqual(len(validator.error_context), 1)
-        # And: Due to add_skip_validation_keys, validate_start_date1 error is not exists
         self.assertEqual(
             validator.error_context["start_date"],
             ["start_date error"],
