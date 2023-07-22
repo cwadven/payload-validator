@@ -1,20 +1,14 @@
 ================================
-Input Validator
+Payload Validator
 ================================
 
-To validate the input.
+To validate the payload data.
 
 
 Quick Start
 ============
 
-1. Add "payload_validator" to your INSTALLED_APPS setting like this::
-
-    INSTALLED_APPS = [
-        ...,
-        "payload_validator",
-    ]
-
+pip install payload-validator
 
 Example
 ============
