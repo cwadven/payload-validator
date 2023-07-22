@@ -1,4 +1,8 @@
-from abc import abstractmethod, ABC
+from abc import (
+    ABC,
+    abstractmethod,
+)
+from types import FunctionType
 from typing import (
     Callable,
     Iterable,
@@ -6,7 +10,6 @@ from typing import (
     TypeVar,
     Union,
 )
-from types import FunctionType
 
 from payload_validator.exceptions import (
     InvalidValueError,

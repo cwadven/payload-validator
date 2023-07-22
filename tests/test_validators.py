@@ -7,8 +7,8 @@ from payload_validator.exceptions import (
     ValidationNotRunException,
 )
 from payload_validator.validators import (
-    PayloadValidator,
     NormalValidatorErrorContext,
+    PayloadValidator,
 )
 
 
