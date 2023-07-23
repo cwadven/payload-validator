@@ -1,0 +1,112 @@
+from __future__ import print_function
+
+import os
+import re
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')  # 또는 'utf-16' 등 다른 인코딩
+
+class TextStyle(object):
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+GIT_HEAD_REF = '.git/HEAD'
+BRANCH_TICKET_ID = re.compile(r'[a-z]{2,}-[0-9]+')
+TICKET_ID = re.compile(r'(?!PEP-8)[A-Z]{2,}-[0-9]+')
+LEADING_WHITESPACES = re.compile(r'^\s+')
+
+
+def out(message, style=None):
+    msg = message
+    if style:
+        msg = style + msg + TextStyle.ENDC
+    sys.stdout.write(msg)
+    sys.stdout.write(os.linesep)
+
+
+def print_warning():
+    message = "[INFO] You don't have to write ticket number If you are using prepare-commit-msg hook"
+    return out(message, style=TextStyle.WARNING)
+
+
+def print_whitespace_warning():
+    message = "[INFO] Redundant whitespaces are stripped. Check your commit message"
+    return out(message, style=TextStyle.WARNING)
+
+
+def get_commit_msg(ref_path):
+    with open(ref_path) as commit_msg_object:
+        return commit_msg_object.read()
+
+
+def get_branch_name():
+    with open(GIT_HEAD_REF) as git_object:
+        ref = git_object.read()
+        branch_name = ref.rsplit('/')[-1]
+        return branch_name
+
+
+def get_ticket_id(branch_name):
+    matched = BRANCH_TICKET_ID.match(branch_name)
+    if not matched:
+        return ''
+    return matched.group().upper()
+
+
+def add_ticket_id(commit_msg_ref, commit_msg, ticket_id):
+    msg = ticket_id + ' ' + commit_msg
+    with open(commit_msg_ref, 'w') as commit_msg_object:
+        commit_msg_object.write(msg)
+
+
+def is_special_commit(commit_type):
+    return commit_type not in ('message', '')
+
+
+def has_lowercase_ticket_id(msg):
+    # type: (str) -> bool
+    return bool(BRANCH_TICKET_ID.match(msg))
+
+
+def main(_, commit_msg_ref, commit_type='', *args):
+    # NOTE: This hook takes one to three parameters
+    # But can't specify exactly what comes as `the third argument`
+    # Checkout the document https://git-scm.com/docs/githooks#_prepare_commit_msg
+    msg = get_commit_msg(commit_msg_ref)
+    if LEADING_WHITESPACES.search(msg):
+        print_whitespace_warning()
+        msg = msg.strip()
+    branch_name = get_branch_name()
+    current_branch_ticket_id = get_ticket_id(branch_name)
+
+    # 이미 티켓 번호가 포함되어 있으면 넘어감
+    if TICKET_ID.match(msg):
+        print_warning()
+        pass
+
+    # NOTE: 케이스가 다양하므로 다음의 티켓을 참고 바랍니다
+    # https://rgpkorea.atlassian.net/browse/ORDER-204
+    elif has_lowercase_ticket_id(msg):
+        tid, message = msg.split(None, 1)
+        if tid != current_branch_ticket_id.lower():
+            message = msg
+        else:
+            print_warning()
+        add_ticket_id(commit_msg_ref, message, current_branch_ticket_id)
+
+    # commit_type 은 'message', 'template', 'merge', 'squash', 'commit', ''
+    # 'message' 또는 '' 인 경우에만 티켓 번호를 붙임 (commit -m 또는 commit 인 경우)
+    elif not is_special_commit(commit_type):
+        add_ticket_id(commit_msg_ref, msg, current_branch_ticket_id)
+
+
+if __name__ == '__main__':
+    print(*sys.argv)
+    main(*sys.argv)
