@@ -1,0 +1,59 @@
+from __future__ import print_function
+
+import re
+import subprocess
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')  # 또는 'utf-16' 등 다른 인코딩
+
+ticket_number = re.compile(r'\b[A-Z]{2,}-[0-9]+')
+branch_ticket_number = re.compile(r'\b[a-z]{2,}-[0-9]+')
+
+
+def bye(msg):
+    sys.stderr.write(msg + '\n')
+    sys.stderr.write('COMMIT ABORTED.\n')
+    sys.exit(1)
+
+
+def is_special_commit(msg):
+    return msg.startswith(('Merge ', 'Revert ', 'Revert:'))  # exception
+
+
+def contains_ticket_number(msg):
+    n = ticket_number.match(msg)
+    return n and not msg.startswith('PEP-8')
+
+
+def empty_msg(msg):
+    return not ticket_number.sub('', msg).strip()
+
+
+def match_current_branch(msg):
+    branch = subprocess.check_output(r"git branch | grep '*'", shell=True).split()[1]
+    if str is not bytes:  # Python 3+
+        branch = branch.decode('utf-8')
+    matched = branch_ticket_number.match(branch)
+    if not matched:
+        return True
+    branch = matched.group()
+    branches = set(ticket_number.findall(msg)) - {'PEP-8'}
+    return branch.upper() in branches
+
+
+def main(commit_editmsg_path):
+    with open(commit_editmsg_path) as f:
+        msg = f.read()
+    if is_special_commit(msg):
+        pass
+    elif not contains_ticket_number(msg):
+        bye('Commit message should start with ticket number.')
+    elif not match_current_branch(msg):
+        bye('Ticket number in commit message should match current branch name.')
+    elif empty_msg(msg):
+        bye('Commit message should have content (except ticket number).')
+
+
+if __name__ == '__main__':
+    print(sys.argv[1])
+    main(sys.argv[1])
