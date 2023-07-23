@@ -1,3 +1,17 @@
+## 0. Trello Links
+
+1. define tasks
+2. assign tasks
+3. create branch as trello card name
+   - For example:
+     - task-9-define-trello-card
+   - defining space should be `-`
+4. create pull request
+5. assign pull request to reviewer 
+6. When pull request is merged, move trello card to `in QA`
+7. When QA is done then move trello card to `Ready To Deploy`
+8. When deploy is done then move trello card to `Done`
+
 ## 1. Git Hooks
 
 - flake8 running before commit
