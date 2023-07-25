@@ -1,7 +1,10 @@
+import re
+import traceback
 from abc import (
     ABC,
     abstractmethod,
 )
+from itertools import chain
 from types import FunctionType
 from typing import (
     Callable,
@@ -13,6 +16,7 @@ from typing import (
 
 from payload_validator.exceptions import (
     InvalidValueError,
+    MismatchedErrorKeysException,
     ValidationException,
     ValidationNotRunException,
 )
@@ -75,7 +79,7 @@ class PayloadValidator(object):
         }
         """
         for key, error_message in self.mandatory_keys.items():
-            if self.payload.get(key) is None:
+            if self.payload.get(key) in [None, ""]:
                 self.add_error_and_skip_validation_key(key, error_message or self.DEFAULT_MANDATORY_ERROR_MESSAGE)
 
     def _validate_payloads_type(self) -> None:
@@ -99,15 +103,31 @@ class PayloadValidator(object):
                 return True
         return False
 
+    def _handle_invalid_value_error_exception(self, e: InvalidValueError) -> None:
+        for key, value in e.error_value_by_key.items():
+            if key in e.add_skip_validation_keys:
+                self.add_error_and_skip_validation_key(key, value)
+            else:
+                self.add_error_context(key, value)
+
+    def _handle_skip_validation_key_payload_exception(self, e: Exception) -> None:
+        tb = traceback.extract_tb(e.__traceback__)
+        pattern = r"self\.payload(?:\.get\('([^']*)'\)|\['([^']*)'\]|(?:\[\"|\'|)([^\"\']*)(?:\"|\'|)\])"
+        for key in [match for match in chain(*re.findall(pattern, tb[-1].line)) if match]:
+            if key in self._skip_validate_keys:
+                pass
+            else:
+                raise e
+
     def _common_validate(self) -> None:
         try:
             self.common_validate()
+        except MismatchedErrorKeysException as e:
+            raise e
         except InvalidValueError as e:
-            for key, value in e.error_value_by_key.items():
-                if key in e.add_skip_validation_keys:
-                    self.add_error_and_skip_validation_key(key, value)
-                else:
-                    self.add_error_context(key, value)
+            self._handle_invalid_value_error_exception(e)
+        except Exception as e:
+            self._handle_skip_validation_key_payload_exception(e)
 
     def common_validate(self) -> None:
         """
@@ -120,12 +140,12 @@ class PayloadValidator(object):
             if type(y) == FunctionType and x.startswith("validate"):
                 try:
                     y(self)
+                except MismatchedErrorKeysException as e:
+                    raise e
                 except InvalidValueError as e:
-                    for key, value in e.error_value_by_key.items():
-                        if key in e.add_skip_validation_keys:
-                            self.add_error_and_skip_validation_key(key, value)
-                        else:
-                            self.add_error_context(key, value)
+                    self._handle_invalid_value_error_exception(e)
+                except Exception as e:
+                    self._handle_skip_validation_key_payload_exception(e)
 
     def validate(self) -> None:
         if not self._validate_called:
