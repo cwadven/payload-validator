@@ -1,7 +1,3 @@
-from abc import (
-    ABC,
-    abstractmethod,
-)
 from types import FunctionType
 from typing import (
     Callable,
@@ -14,6 +10,10 @@ from typing import (
 )
 
 from payload_validator.comparisons import PayloadComparison
+from payload_validator.error_contexts import (
+    NormalValidatorErrorContext,
+    ValidatorErrorContext,
+)
 from payload_validator.exceptions import (
     InvalidValueError,
     MismatchedErrorKeysException,
@@ -23,18 +23,6 @@ from payload_validator.exceptions import (
 
 
 T = TypeVar("T")  # Use TypeVar for arbitrary object types
-
-
-class ValidatorErrorContext(ABC, dict):
-    @abstractmethod
-    def add_error(self, field: str, error: str):
-        pass
-
-
-class NormalValidatorErrorContext(ValidatorErrorContext):
-    def add_error(self, field: str, error: str):
-        value = self.setdefault(field, [])
-        value.append(error)
 
 
 class PayloadValidator(object):
