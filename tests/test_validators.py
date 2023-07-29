@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+from payload_validator.comparisons import PayloadComparison
 from payload_validator.exceptions import (
     InvalidValueError,
     MismatchedErrorKeysException,
@@ -206,13 +207,13 @@ class TestPayloadValidator(unittest.TestCase):
         # Then: 4 keys should be in error context
         self.assertEqual(validator._validate_called, True)
         self.assertEqual(len(validator.error_context), 4)
-        # And: if mandatory key is missing, error message should be only mandatory due to _skip_validate_keys
-        self.assertIn("displayable", validator._skip_validate_keys)
+        # And: if mandatory key is missing, error message should be only mandatory due to skip_validate_keys
+        self.assertIn("displayable", validator.skip_validate_keys)
         self.assertEqual(
             validator.error_context["displayable"],
             [MandatoryAndTypeValidPayloadValidator.Meta.mandatory_keys["displayable"]],
         )
-        self.assertIn("count", validator._skip_validate_keys)
+        self.assertIn("count", validator.skip_validate_keys)
         self.assertEqual(
             validator.error_context["count"],
             [MandatoryAndTypeValidPayloadValidator.DEFAULT_MANDATORY_ERROR_MESSAGE],
@@ -563,7 +564,7 @@ class TestPayloadValidator(unittest.TestCase):
 
         # Then:
         self.assertEqual(validator._validate_called, True)
-        self.assertIn("start_date", validator._skip_validate_keys)
+        self.assertIn("start_date", validator.skip_validate_keys)
         self.assertEqual(len(validator.error_context), 1)
         # And: Due to add_skip_validation_keys, validate_start_date1 error is not exists
         self.assertEqual(
@@ -605,7 +606,7 @@ class TestPayloadValidator(unittest.TestCase):
 
         # Then:
         self.assertEqual(validator._validate_called, True)
-        self.assertIn("start_date", validator._skip_validate_keys)
+        self.assertIn("start_date", validator.skip_validate_keys)
         self.assertEqual(len(validator.error_context), 1)
         self.assertEqual(
             validator.error_context["start_date"],
@@ -648,7 +649,7 @@ class TestPayloadValidator(unittest.TestCase):
 
         # Then:
         self.assertEqual(validator._validate_called, True)
-        self.assertIn("start_date", validator._skip_validate_keys)
+        self.assertIn("start_date", validator.skip_validate_keys)
         self.assertEqual(len(validator.error_context), 1)
         # And: Due to add_skip_validation_keys error is not exists
         self.assertEqual(
@@ -677,235 +678,40 @@ class TestPayloadValidator(unittest.TestCase):
         self.assertEqual(len(validator._error_context), 1)
         self.assertEqual(validator._error_context["displayable"], ["displayable error"])
         # And: Due to add_skip_validation_keys error is not exists
-        self.assertNotIn("displayable", validator._skip_validate_keys)
+        self.assertNotIn("displayable", validator.skip_validate_keys)
 
-    def test_handle_invalid_value_error_exception_when_add_skip_validation_keys_exists(self):
+    def test_get_payload(self):
         # Given:
         payload = {"displayable": "example"}
         validator = PayloadValidator(payload)
 
         # When:
-        validator._handle_invalid_value_error_exception(
-            InvalidValueError({"displayable": "displayable error"}, ["displayable"])
-        )
+        comparison_displayable = validator.get_payload("displayable")
 
         # Then:
-        self.assertEqual(len(validator._error_context), 1)
-        self.assertEqual(validator._error_context["displayable"], ["displayable error"])
-        # And: Due to add_skip_validation_keys error is exists
-        self.assertIn("displayable", validator._skip_validate_keys)
+        self.assertIsInstance(comparison_displayable, PayloadComparison)
 
-    @patch("payload_validator.validators.PayloadValidator._handle_skip_validation_key_payload_exception")
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_common_validate_exception(self, mock_handle_skip_validation_key_payload_exception):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-        custom_validator.add_error_and_skip_validation_key("start_date", "start_date is required")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
+    def test_get_payload_when_cached(self):
+        # Given:
+        payload = {"displayable": "example"}
+        validator = PayloadValidator(payload)
+        # And: not cached
+        self.assertEqual(validator._cache_payload_comparisons, {})
 
         # When:
-        custom_validator._common_validate()
+        comparison_displayable = validator.get_payload("displayable")
 
-        # Then:
-        mock_handle_skip_validation_key_payload_exception.assert_called_once()
-        self.assertEqual(custom_validator.error_context["start_date"], ["start_date is required"])
+        # Then: cached
+        self.assertIsInstance(comparison_displayable, PayloadComparison)
+        self.assertEqual(validator._cache_payload_comparisons["displayable"], comparison_displayable)
 
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_common_validate_exception_should_pass(self):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-        custom_validator.add_error_and_skip_validation_key("start_date", "start_date is required")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
+    @patch("payload_validator.validators.PayloadValidator.common_validate")
+    def test_mismatched_error_keys_exception(self, mock_common_validate):
+        # Given:
+        payload = {"displayable": "example"}
+        validator = PayloadValidator(payload)
+        mock_common_validate.side_effect = MismatchedErrorKeysException()
 
         # When:
-        custom_validator._common_validate()
-
-        # Then:
-        self.assertEqual(custom_validator.error_context["start_date"], ["start_date is required"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_common_validate_exception_should_not_pass(self):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-
-        # Expected:
-        with self.assertRaises(KeyError):
-            custom_validator._common_validate()
-
-    @patch("payload_validator.validators.PayloadValidator._handle_skip_validation_key_payload_exception")
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_common_validate_exception(self, mock_handle_skip_validation_key_payload_exception):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-        custom_validator.add_error_and_skip_validation_key("start_date", "type should be integer")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._common_validate()
-
-        # Then:
-        mock_handle_skip_validation_key_payload_exception.assert_called_once()
-        self.assertEqual(custom_validator.error_context["start_date"], ["type should be integer"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_common_validate_exception_should_pass(self):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-        custom_validator.add_error_and_skip_validation_key("start_date", "type should be integer")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._common_validate()
-
-        # Then:
-        self.assertEqual(custom_validator.error_context["start_date"], ["type should be integer"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_common_validate_exception_should_not_pass(self):
-        # Given: common_validate method validation
-        class CustomValidator(PayloadValidator):
-            def common_validate(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-
-        # Expected:
-        with self.assertRaises(TypeError):
-            custom_validator._common_validate()
-
-    @patch("payload_validator.validators.PayloadValidator._handle_skip_validation_key_payload_exception")
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_validate_method_exception(self, mock_handle_skip_validation_key_payload_exception):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-        custom_validator.add_error_and_skip_validation_key("start_date", "start_date is required")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._validate_methods()
-
-        # Then:
-        mock_handle_skip_validation_key_payload_exception.assert_called_once()
-        self.assertEqual(custom_validator.error_context["start_date"], ["start_date is required"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_validate_method_should_pass(self):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-        custom_validator.add_error_and_skip_validation_key("start_date", "start_date is required")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._validate_methods()
-
-        # Then:
-        self.assertEqual(custom_validator.error_context["start_date"], ["start_date is required"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_not_exists_validate_method_should_not_pass(self):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date key not exists
-        custom_validator = CustomValidator({})
-
-        # Expected:
-        with self.assertRaises(KeyError):
-            custom_validator._validate_methods()
-
-    @patch("payload_validator.validators.PayloadValidator._handle_skip_validation_key_payload_exception")
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_validate_method_exception(self, mock_handle_skip_validation_key_payload_exception):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-        custom_validator.add_error_and_skip_validation_key("start_date", "type should be integer")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._validate_methods()
-
-        # Then:
-        mock_handle_skip_validation_key_payload_exception.assert_called_once()
-        self.assertEqual(custom_validator.error_context["start_date"], ["type should be integer"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_validate_method_exception_should_pass(self):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-        custom_validator.add_error_and_skip_validation_key("start_date", "type should be integer")
-        # And: Set _validate_called to True
-        custom_validator._validate_called = True
-
-        # When:
-        custom_validator._validate_methods()
-
-        # Then:
-        self.assertEqual(custom_validator.error_context["start_date"], ["type should be integer"])
-
-    def test_handle_skip_validation_key_payload_in_payload_key_type_invalid_validate_method_exception_should_not_pass(self):
-        # Given: validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date(self):
-                if self.payload["start_date"] > 1:
-                    pass
-
-        # And: Add payload start_date is String
-        custom_validator = CustomValidator({"start_date": "String"})
-
-        # Expected:
-        with self.assertRaises(TypeError):
-            custom_validator._validate_methods()
+        with self.assertRaises(MismatchedErrorKeysException):
+            validator._common_validate()
