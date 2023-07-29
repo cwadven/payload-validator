@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from payload_validator.comparisons import PayloadComparison
 from payload_validator.exceptions import (
@@ -703,3 +704,14 @@ class TestPayloadValidator(unittest.TestCase):
         # Then: cached
         self.assertIsInstance(comparison_displayable, PayloadComparison)
         self.assertEqual(validator._cache_payload_comparisons["displayable"], comparison_displayable)
+
+    @patch("payload_validator.validators.PayloadValidator.common_validate")
+    def test_mismatched_error_keys_exception(self, mock_common_validate):
+        # Given:
+        payload = {"displayable": "example"}
+        validator = PayloadValidator(payload)
+        mock_common_validate.side_effect = MismatchedErrorKeysException()
+
+        # When:
+        with self.assertRaises(MismatchedErrorKeysException):
+            validator._common_validate()
