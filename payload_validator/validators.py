@@ -123,7 +123,7 @@ class PayloadValidator(object):
 
     def _validate_methods(self) -> None:
         for x, y in self.__class__.__dict__.items():
-            if type(y) == FunctionType and x.startswith("validate"):
+            if type(y) is FunctionType and x.startswith("validate"):
                 try:
                     y(self)
                 except MismatchedErrorKeysException as e:
