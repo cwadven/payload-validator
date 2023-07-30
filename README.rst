@@ -18,6 +18,12 @@ CodeSandBox Link:
 https://codesandbox.io/p/sandbox/payload-validator-zngckp?file=%2Fmain.py%3A1%2C1
 
 
+More Example
+==============
+Example List:
+
+https://github.com/cwadven/payload-validator/blob/master/examples/example1.py
+
 
 Explain
 ============
@@ -92,13 +98,13 @@ using_this_payload.py::
 
         # 4-1, 4-2
         def validate_hello_world(self):
-            if not self.payload['displayable']:
+            if not self.get_payload('displayable'):
                 # 4-3, 4-4
                 raise InvalidValueError({'displayable': 'displayable is false'})
 
         # 4-1, 4-2
         def validate_max_length(self):
-            if self.payload['max_length'] <= 0:
+            if self.get_payload('max_length') <= 0:
                 # 4-3, 4-4, 4-5
                 raise InvalidValueError(
                     {
@@ -109,7 +115,7 @@ using_this_payload.py::
 
         # 5
         def common_validate(self):
-            if self.payload['max_length'] < self.payload['min_length']:
+            if self.get_payload('max_length') < self.get_payload('min_length'):
                 raise InvalidValueError(
                     {
                         'max_length': 'max_length should be greater than min_length',
@@ -226,13 +232,13 @@ custom_using_this_payload.py::
 
         # 4-1, 4-2
         def validate_hello_world(self):
-            if not self.payload['displayable']:
+            if not self.get_payload('displayable'):
                 # 4-3, 4-4
                 raise InvalidValueError({'displayable': 'displayable is false,#123456'})
 
         # 4-1, 4-2
         def validate_max_length(self):
-            if self.payload['max_length'] <= 0:
+            if self.get_payload('max_length') <= 0:
                 # 4-3, 4-4, 4-5
                 raise InvalidValueError(
                     {
@@ -243,7 +249,7 @@ custom_using_this_payload.py::
 
         # 5
         def common_validate(self):
-            if self.payload['max_length'] < self.payload['min_length']:
+            if self.get_payload('max_length') < self.get_payload('min_length'):
                 raise InvalidValueError(
                     {
                         'max_length': 'max_length should be greater than min_length,#000000',
