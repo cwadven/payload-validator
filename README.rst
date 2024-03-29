@@ -60,7 +60,7 @@ using_this_payload.py::
     # 4-2. 'validate_{key}' validating sequence is top to bottom code written in 'PayloadValidator'
     # 4-3. If 'validate_{key}' raise 'InvalidValueError', it will be added to 'error_context'
     # 4-4. 'InvalidValueError' 'error_value_by_key' input should be 'dictionary' that contains payload key and error message (this message could be iterator)
-    # 4-5. 'InvalidValueError' input can contain 'add_skip_validation_keys' which skip if there is already payload key of error
+    # 4-5. 'InvalidValueError' input can contain 'ignore_existing_error_keys' which skip if there is already payload key of error
     # 5. Can override 'common_validate' method to add 'common_validation'
     # 6. Validating Sequence: Mandatory Check -> Type Check -> validate_{key} (top from bottom code) -> common_validate
     # 7. Use 'validate()' method to validate payload or execute 'is_valid()' method to check validation even once
@@ -110,7 +110,7 @@ using_this_payload.py::
                     {
                         'max_length': 'min_length should be greater than 0'
                     },
-                    add_skip_validation_keys=['max_length']
+                    ignore_existing_error_keys=['max_length']
                 )
 
         # 5
@@ -180,7 +180,7 @@ custom_using_this_payload.py::
     # 4-2. 'validate_{key}' validating sequence is top to bottom code written in 'PayloadValidator'
     # 4-3. If 'validate_{key}' raise 'InvalidValueError', it will be added to 'error_context'
     # 4-4. 'InvalidValueError' 'error_value_by_key' input should be 'dictionary' that contains payload key and error message (this message could be iterator)
-    # 4-5. 'InvalidValueError' input can contain 'add_skip_validation_keys' which skip if there is already payload key of error
+    # 4-5. 'InvalidValueError' input can contain 'ignore_existing_error_keys' which skip if there is already payload key of error
     # 5. Can override 'common_validate' method to add 'common_validation'
     # 6. Validating Sequence: Mandatory Check -> Type Check -> validate_{key} (top from bottom code) -> common_validate
     # 7. Use 'validate()' method to validate payload or execute 'is_valid()' method to check validation even once
@@ -244,7 +244,7 @@ custom_using_this_payload.py::
                     {
                         'max_length': 'min_length should be greater than 0,#000000'
                     },
-                    add_skip_validation_keys=['max_length']
+                    ignore_existing_error_keys=['max_length']
                 )
 
         # 5

@@ -102,10 +102,9 @@ class PayloadValidator(object):
 
     def _handle_invalid_value_error_exception(self, e: InvalidValueError) -> None:
         for key, value in e.error_value_by_key.items():
-            if key in e.add_skip_validation_keys:
-                self.add_error_and_skip_validation_key(key, value)
-            else:
-                self.add_error_context(key, value)
+            if key in e.ignore_existing_error_keys and key in self._error_context.keys():
+                continue
+            self.add_error_context(key, value)
 
     def _common_validate(self) -> None:
         try:

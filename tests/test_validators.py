@@ -539,38 +539,16 @@ class TestPayloadValidator(unittest.TestCase):
         # Given: Custom validate method validation
         class CustomValidator(PayloadValidator):
             def validate_start_date(self):
-                raise InvalidValueError({"start_date": "start_date error"}, add_skip_validation_keys=["end_date"])
+                raise InvalidValueError(
+                    {"start_date": "start_date error"},
+                    ignore_existing_error_keys={"end_date"}
+                )
         # And:
         payload = {"start_date": "2023-07-01"}
 
         with self.assertRaises(MismatchedErrorKeysException):
             validator = CustomValidator(payload)
             validator.validate()
-
-    def test_custom_validate_method_should_not_return_error_context_when_skip_key_is_exists(self):
-        # Given: Custom validate method validation
-        class CustomValidator(PayloadValidator):
-            def validate_start_date1(self):
-                raise InvalidValueError({"start_date": "start_date error1"}, add_skip_validation_keys=["start_date"])
-
-            def validate_start_date2(self):
-                raise InvalidValueError({"start_date": "start_date error2"})
-        # And:
-        payload = {"start_date": "2023-07-01"}
-
-        with self.assertRaises(ValidationException):
-            validator = CustomValidator(payload)
-            validator.validate()
-
-        # Then:
-        self.assertEqual(validator._validate_called, True)
-        self.assertIn("start_date", validator.skip_validate_keys)
-        self.assertEqual(len(validator.error_context), 1)
-        # And: Due to add_skip_validation_keys, validate_start_date1 error is not exists
-        self.assertEqual(
-            validator.error_context["start_date"],
-            ["start_date error1"],
-        )
 
     def test_common_validate_method_should_return_error_context_when_invalid_by_validate_method(self):
         # Given: common_validate method validation
@@ -592,25 +570,29 @@ class TestPayloadValidator(unittest.TestCase):
             ["start_date error"],
         )
 
-    def test_common_validate_method_should_not_return_error_context_when_skip_key_is_exists(self):
+    def test_common_validate_method_should_not_return_error_context_when_ignore_existing_error_keys_is_exists(self):
         # Given: common_validate method validation
         class CustomValidator(PayloadValidator):
             def common_validate(self):
-                raise InvalidValueError({"start_date": "start_date error"}, add_skip_validation_keys=["start_date"])
+                raise InvalidValueError(
+                    {"start_date": "start_date error"},
+                    ignore_existing_error_keys={"start_date"}
+                )
         # And:
         payload = {"start_date": "2023-07-01"}
+        validator = CustomValidator(payload)
+        validator._error_context = {"start_date": ["Already error exists"]}
 
         with self.assertRaises(ValidationException):
-            validator = CustomValidator(payload)
             validator.validate()
 
         # Then:
         self.assertEqual(validator._validate_called, True)
-        self.assertIn("start_date", validator.skip_validate_keys)
+        # And: Due to ignore_existing_error_keys error is not exists
         self.assertEqual(len(validator.error_context), 1)
         self.assertEqual(
             validator.error_context["start_date"],
-            ["start_date error"],
+            ["Already error exists"],
         )
 
     def test_add_error_context_method_should_return_error_context(self):

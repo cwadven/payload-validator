@@ -42,7 +42,7 @@ class TestMismatchedErrorKeysException(unittest.TestCase):
 
 
 class TestInvalidValueError(unittest.TestCase):
-    def test_invalid_value_error_exception_should_success_when_without_add_skip_validation_keys(self):
+    def test_invalid_value_error_exception_should_success_when_without_ignore_existing_error_keys(self):
         # Given:
         error_value_by_key = {"key1": "error1", "key2": "error2"}
 
@@ -51,24 +51,24 @@ class TestInvalidValueError(unittest.TestCase):
 
         # Then:
         self.assertEqual(error.error_value_by_key, error_value_by_key)
-        self.assertEqual(error.add_skip_validation_keys, [])
+        self.assertEqual(error.ignore_existing_error_keys, set())
 
-    def test_invalid_value_error_exception_should_success_when_add_skip_validation_keys(self):
+    def test_invalid_value_error_exception_should_success_when_ignore_existing_error_keys(self):
         # Given:
         error_value_by_key = {"key1": "error1", "key2": "error2"}
-        add_skip_validation_keys = ["key2"]
+        ignore_existing_error_keys = {"key2"}
 
         # When:
-        error = InvalidValueError(error_value_by_key, add_skip_validation_keys)
+        error = InvalidValueError(error_value_by_key, ignore_existing_error_keys)
 
         # Then:
         self.assertEqual(error.error_value_by_key, error_value_by_key)
-        self.assertEqual(error.add_skip_validation_keys, add_skip_validation_keys)
+        self.assertEqual(error.ignore_existing_error_keys, ignore_existing_error_keys)
 
     def test_invalid_value_error_exception_should_raise_when_add_skip_validation_keys_not_exists_in_error_value_by_key(self):
         # Given: not exists add_skip_validation_keys in error_value_by_key
         error_value_by_key = {"key1": "error1", "key2": "error2"}
-        invalid_keys = ["invalid_key", "invalid_key2"]
+        invalid_keys = {"invalid_key", "invalid_key2"}
 
         # When:
         with self.assertRaises(MismatchedErrorKeysException) as context:
@@ -77,7 +77,7 @@ class TestInvalidValueError(unittest.TestCase):
         # Then: invalid_key and invalid_key2 should be in error message
         self.assertEqual(
             str(context.exception),
-            "In add_skip_validation_keys {} not in error_value_by_key".format(
-                "invalid_key, invalid_key2"
+            "In ignore_existing_error_keys {} not in error_value_by_key".format(
+                ', '.join(invalid_keys)
             )
         )
