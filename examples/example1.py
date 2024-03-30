@@ -1,90 +1,113 @@
-from payload_validator.exceptions import InvalidValueError
+from datetime import datetime
+from pprint import pprint
+
+from payload_validator.exceptions import (
+    InvalidValueError,
+    ValidationException,
+)
 from payload_validator.validators import PayloadValidator
 
-GENDER_ENUMS = ["male", "female"]
+
+def validate_date_parsing(date_str):
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d')
+        return True
+    except (TypeError, ValueError):
+        return False
 
 
-def validate_gender_enums(value: str):
-    return value in GENDER_ENUMS
+# 1
+class NewPayloadValidator(PayloadValidator):
+    # 2
+    DEFAULT_MANDATORY_ERROR_MESSAGE = 'mandatory data missing'
 
-
-class MarriageSuitabilityValidator(PayloadValidator):
     class Meta:
+        # 3-1, 3-2
         mandatory_keys = {
-            "name1": "user1 name cannot be empty",
-            "age1": "user1 age cannot be empty",
-            "gender1": "user1 gender cannot be empty",
-
-            "name2": "user2 name cannot be empty",
-            "age2": "user2 age cannot be empty",
-            "gender2": "user2 gender cannot be empty",
+            'displayable': 'displayable is required',
+            'mode': 'mode is always required',
+            'amount': 'why are you not setting amount?',
+            'minimum_order_value': 'minimum order value is required',
+            'applicable_order_types': 'really you are not setting applicable order types?',
+            'start_date': 'start date is required',
+            'end_date': 'end date is required for your job',
         }
+        # 3-1, 3-3
         type_of_keys = {
-            "name1": [str, "name should be string."],
-            "age1": [int, "age should be integer."],
-            "gender1": [validate_gender_enums, f"gender should be {', '.join(GENDER_ENUMS)}."],
-
-            "name2": [str, "name should be string."],
-            "age2": [int, "age should be integer."],
-            "gender2": [validate_gender_enums, f"gender should be {', '.join(GENDER_ENUMS)}."],
+            'amount': [int, 'integer_type_needs'],
+            'minimum_order_value': [int, 'integer_type_needs'],
+            'maximum_download_count': [(int, type(None)), 'integer_type_needs or NoneType'],
+            # 3-4
+            'start_date': [validate_date_parsing, 'need to be date type'],
+            'end_date': [validate_date_parsing, 'need to be date type'],
         }
 
-    def validate_name(self):
-        if len(self.get_payload("name1")) < 3:
-            raise InvalidValueError({"name1": "Name should be more than 2 characters."})
-        if len(self.get_payload("name2")) < 3:
-            raise InvalidValueError({"name2": "Name should be more than 2 characters."})
+    # 4-1, 4-2
+    def validate_hello_world(self):
+        if not self.get_payload('displayable'):
+            # 4-3, 4-4
+            raise InvalidValueError({'displayable': 'displayable is false'})
 
-    def validate_age(self):
-        if self.get_payload("age1"):
-            if not (self.get_payload("age1").value - 4 <= self.get_payload("age2") <= self.get_payload("age1").value + 4):
-                raise InvalidValueError({
-                    "age2": "user2 is invalid Age what user1 wants.",
-                })
+    # 4-1, 4-2
+    def validate_max_length(self):
+        if self.get_payload('max_length') <= 0:
+            # 4-3, 4-4, 4-5, Extra
+            self.add_error_and_skip_validation_key(
+                'max_length',
+                [
+                    'validate_max_length: This max_length should be inside error context1',
+                    'validate_max_length: This max_length should be inside error context2',
+                ],
+            )
 
-        if self.get_payload("age2"):
-            if not (self.get_payload("age2").value - 10 <= self.get_payload("age1") <= self.get_payload("age2").value + 10):
-                raise InvalidValueError({
-                    "age1": "user1 is invalid Age what user2 wants.",
-                })
+    def validate_min_length(self):
+        if self.get_payload('min_length') <= 0:
+            # 4-3, 4-4
+            raise InvalidValueError(
+                {
+                    'min_length': 'validate_min_length: This min_length should be inside error context',
+                },
+            )
 
+    # 5
     def common_validate(self):
-        for i in range(1, 3):
-            if self.get_payload(f"gender{i}") == "male" and self.get_payload(f"age{i}") < 50:
-                raise InvalidValueError({
-                    f"gender{i}": "Male cannot be younger than 30 years old.",
-                })
+        if self.get_payload('max_length') < self.get_payload('min_length'):
+            raise InvalidValueError(
+                {
+                    'max_length': 'This Should be not exists in error context'
+                                  'because of at `validate_max_length` function'
+                                  'add_error_and_skip_validation_key method has max_length error context',
+                    'min_length': 'This Should be not exists in error context'
+                                  'because of validate_min_length method has min_length error context'
+                                  'and this InvalidValueError has ignore_existing_error_keys of mix_length',
+                },
+                ignore_existing_error_keys={'min_length'},
+            )
 
-            if self.get_payload(f"gender{i}") == "female" and self.get_payload(f"age{i}") < 40:
-                raise InvalidValueError({
-                    f"gender{i}": "Male cannot be younger than 30 years old.",
-                })
-
-
-users_info = {
-    "name1": input("Enter user1 name: "),
-    "age1": int(input("Enter user1 age: ")),
-    "gender1": input("Enter user1 gender: "),
-
-    "name2": input("Enter user2 name: "),
-    "age2": int(input("Enter user2 age: ")),
-    "gender2": input("Enter user2 gender: "),
-}
-
-marriage_suitability_validator = MarriageSuitabilityValidator(users_info)
-
-
-if marriage_suitability_validator.is_valid():
-    print("Two user is each valid for marriage.")
-else:
-    print(marriage_suitability_validator.error_context)
+        if True:
+            raise InvalidValueError(
+                {
+                    'max_length': 'This Should be not exists in error context'
+                                  'because of upper logic has man_length error context'
+                                  'and this InvalidValueError has ignore_existing_error_keys of max_length',
+                    'min_length': 'common_validate: This min_length should be inside error context',
+                },
+                ignore_existing_error_keys={'max_length'},
+            )
 
 
-# Output:
-# Enter user1 name: Bob
-# Enter user1 age: 28
-# Enter user1 gender: male
-# Enter user2 name: Jane
-# Enter user2 age: 27
-# Enter user2 gender: female
-# {'gender1': ['Male cannot be younger than 30 years old.']}
+validator = NewPayloadValidator(
+    {'displayable': True, 'start_date': 1, 'min_length': 0, 'max_length': 0}
+)
+
+try:
+    # 7
+    validator.validate()
+except ValidationException as e:
+    print('[ validate method ]')
+    pprint(validator.error_context)
+
+# 8
+if not validator.is_valid():
+    print('[ is_valid method ]')
+    pprint(validator.error_context)
