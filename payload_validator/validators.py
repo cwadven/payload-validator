@@ -6,7 +6,7 @@ from typing import (
     List,
     Optional,
     TypeVar,
-    Union,
+    Union, Any,
 )
 
 from payload_validator.comparisons import PayloadComparison
@@ -45,10 +45,8 @@ class PayloadValidator(object):
 
         self._validate_called: bool = False
 
-    def get_payload(self, key: str) -> PayloadComparison:
-        if key not in self._cache_payload_comparisons:
-            self._cache_payload_comparisons[key] = PayloadComparison(self, key)
-        return self._cache_payload_comparisons[key]
+    def get_payload(self, key: str) -> Any:
+        return self.payload.get(key)
 
     def add_error_context(self, key: str, errors: Union[str, Iterable]) -> None:
         if key not in self.skip_validate_keys:
