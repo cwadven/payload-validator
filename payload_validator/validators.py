@@ -9,7 +9,6 @@ from typing import (
     Union, Any,
 )
 
-from payload_validator.comparisons import PayloadComparison
 from payload_validator.error_contexts import (
     NormalValidatorErrorContext,
     ValidatorErrorContext,
