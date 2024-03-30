@@ -74,7 +74,7 @@ class PayloadValidator(object):
         }
         """
         for key, error_message in self.mandatory_keys.items():
-            if self.payload.get(key) in [None, ""]:
+            if self.payload.get(key) in {None, ""}:
                 self.add_error_and_skip_validation_key(key, error_message or self.DEFAULT_MANDATORY_ERROR_MESSAGE)
 
     def _validate_payloads_type(self) -> None:
